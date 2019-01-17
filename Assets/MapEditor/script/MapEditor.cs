@@ -14,6 +14,11 @@ public class MapEditor : MonoBehaviour
 
     // -----------------------外置属性-----------------------
     /// <summary>
+    /// 网络类
+    /// </summary>
+    public NeuralMono NeuralMono;
+
+    /// <summary>
     /// 地面
     /// </summary>
     public BoxCollider Plane;
@@ -142,17 +147,12 @@ public class MapEditor : MonoBehaviour
     /// 按钮列表
     /// </summary>
     private List<Button> buttonList = new List<Button>();
-
-
-    // -----------------------------障碍曾ID---------------------------------
-
+    
     /// <summary>
     /// 无障碍物
     /// </summary>
     private const int AccessibilityId = 0;
-
-
-
+    
     /// <summary>
     /// 障碍物颜色
     /// </summary>
@@ -260,6 +260,7 @@ public class MapEditor : MonoBehaviour
             rightup = new Vector3(halfMapWidth + startPosition.x, (Plane.size.y * Plane.transform.localScale.y) / 2 + startPosition.y, halfMapHight + startPosition.z);
             rightdown = new Vector3(halfMapWidth + startPosition.x, (Plane.size.y * Plane.transform.localScale.y) / 2 + startPosition.y, -halfMapHight + startPosition.z);
 
+            // 初始化神经网络
         }
     }
 
@@ -632,6 +633,66 @@ public class MapEditor : MonoBehaviour
         
 
         // 创建按钮并添加事件
+
+    }
+
+    /// <summary>
+    /// 刷新神经网络显示
+    /// </summary>
+    private void RefreshNeural()
+    {
+        // 如果没有显示实体, 重新创建
+
+        // 将各个节点参数值显示
+        // 将激活节点变色
+
+    }
+
+    /// <summary>
+    /// 识别
+    /// </summary>
+    public void Recognition()
+    {
+        var height = array.Length;
+        var width = array[0].Length;
+        var inDatas = new float[height * width];
+        
+        // 获取数组内容
+        for (var i = 0; i < height; i++)
+        {
+            for (var j = 0; j < width; j++)
+            {
+                inDatas[i * width + j] = array[i][j];
+            }
+        }
+        var outDatas = NeuralMono.Calculate(inDatas);
+
+        var maxIndex = 0;
+        var maxVal = float.MinValue;
+        for (var i = 0; i < outDatas.Length; i++)
+        {
+            if (outDatas[i] > maxVal)
+            {
+                maxVal = outDatas[i];
+                maxIndex = i;
+            }
+        }
+
+        Debug.Log("识别结果:" + maxIndex);
+
+        // 神经网络输入数组内容
+        // 神经网络输出结果
+        // 刷新神经网络实体显示效果
+    }
+
+    /// <summary>
+    /// 训练神经网络
+    /// </summary>
+    public void Train()
+    {
+        // 获取数据集
+        // 遍历数据集进行识别训练
+        // 如果识别率低于设置值则继续训练
 
     }
 }
