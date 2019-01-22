@@ -69,6 +69,11 @@ public class MapEditor : MonoBehaviour
     public Color LineColor = Color.red;
 
     /// <summary>
+    /// 单个数字训练次数
+    /// </summary>
+    public int SingleTrailCount = 10000;
+
+    /// <summary>
     /// level1层元素
     /// </summary>
     public List<KeyValuePair<int, string>> Level1ItemList = new List<KeyValuePair<int, string>>()
@@ -106,7 +111,16 @@ public class MapEditor : MonoBehaviour
     /// 当前位置已设置
     /// </summary>
     public const int SetYet = 1;
-    
+
+    /// <summary>
+    /// 单个例子宽度
+    /// </summary>
+    public int SimpleWidth = 19;
+
+    /// <summary>
+    /// 例子高度
+    /// </summary>
+    public int SimpleHeight = 23;
 
 
     //--------------------私有属性-----------------------
@@ -116,6 +130,10 @@ public class MapEditor : MonoBehaviour
     /// </summary>
     private int[][] array = null;
 
+    /// <summary>
+    /// 训练数据
+    /// </summary>
+    private Dictionary<int, int[]> trailData = new Dictionary<int, int[]>();
     /// <summary>
     /// 鼠标点击状态
     /// 0: 当前位置无障碍
@@ -260,7 +278,8 @@ public class MapEditor : MonoBehaviour
             rightup = new Vector3(halfMapWidth + startPosition.x, (Plane.size.y * Plane.transform.localScale.y) / 2 + startPosition.y, halfMapHight + startPosition.z);
             rightdown = new Vector3(halfMapWidth + startPosition.x, (Plane.size.y * Plane.transform.localScale.y) / 2 + startPosition.y, -halfMapHight + startPosition.z);
 
-            // 初始化神经网络
+            // 读取训练数据
+
         }
     }
 
@@ -690,10 +709,52 @@ public class MapEditor : MonoBehaviour
     /// </summary>
     public void Train()
     {
+        // 读取数据. 进行识别, 如果识别错误, 进行训练
+        foreach (var kv in trailData)
+        {
+            for(var i = 0; i < SingleTrailCount; i++)
+            {
+                NeuralMono.Train(GetFloats(kv.Value), GetOutputData(kv.Key));
+            }
+        }
+
         // 获取数据集
+
         // 遍历数据集进行识别训练
+
         // 如果识别率低于设置值则继续训练
 
+
+    }
+
+
+    private float[] GetFloats(int[] from)
+    {
+        var result = new float[from.Length];
+
+        for (var i = 0; i < from.Length; i++)
+        {
+            result[i] = from[i];
+        }
+        return result;
+    }
+
+
+    private float[] GetOutputData(int pos)
+    {
+        var result = new float[10];
+        for (var i = 0; i < 10; i++)
+        {
+            if (pos == i)
+            {
+                result[i] = 1;
+            }
+            else
+            {
+                result[i] = 0;
+            }
+        }
+        return result;
     }
 }
 
