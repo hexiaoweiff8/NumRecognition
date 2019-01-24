@@ -91,10 +91,10 @@ namespace Assets.Script.AI.Neural
             for (var i = 0; i < FromList.Count; i++)
             {
                 FromList[i].weight += FromList[i].NeuronNode.Value * Error * StudyRate;
-                if (float.IsNaN(FromList[i].weight) || float.IsPositiveInfinity(FromList[i].weight))
-                {
-                    int j = 0;
-                }
+                //if (float.IsNaN(FromList[i].weight) || float.IsPositiveInfinity(FromList[i].weight))
+                //{
+                //    int j = 0;
+                //}
             }
         }
 
@@ -121,13 +121,14 @@ namespace Assets.Script.AI.Neural
             {
                 result += FromList[i].weight * FromList[i].NeuronNode.Value;
             }
+            // TODO 多激活函数 RELU
             // signod
             var val = (float) (1f/(1f + Math.Pow(Math.E, -result)));
 
-            if (float.IsNaN(val) || float.IsPositiveInfinity(val))
-            {
-                int i = 0;
-            }
+            //if (float.IsNaN(val) || float.IsPositiveInfinity(val))
+            //{
+            //    int i = 0;
+            //}
 
             return val;
         }
@@ -160,10 +161,10 @@ namespace Assets.Script.AI.Neural
 
             var val = result * (Value / (1.01f - Value));
 
-            if (float.IsNaN(val) || float.IsPositiveInfinity(val))
-            {
-                int i = 0;
-            }
+            //if (float.IsNaN(val) || float.IsPositiveInfinity(val))
+            //{
+            //    int i = 0;
+            //}
             return val;
         }
 

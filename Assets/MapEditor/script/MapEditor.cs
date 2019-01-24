@@ -71,7 +71,42 @@ public class MapEditor : MonoBehaviour
     /// <summary>
     /// 单个数字训练次数
     /// </summary>
-    public int SingleTrailCount = 10000;
+    public int SingleTrailCount = 4000;
+
+    /// <summary>
+    /// 单个例子宽度
+    /// </summary>
+    public int SimpleWidth = 19;
+
+    /// <summary>
+    /// 例子高度
+    /// </summary>
+    public int SimpleHeight = 23;
+
+    /// <summary>
+    /// 上侧边框(像素)
+    /// </summary>
+    public int UpBorder = 0;
+
+    /// <summary>
+    /// 下侧边框(像素)
+    /// </summary>
+    public int DownBorder = 0;
+
+    /// <summary>
+    /// 右侧边框(像素)
+    /// </summary>
+    public int RightBorder = 0;
+
+    /// <summary>
+    /// 左侧边框(像素)
+    /// </summary>
+    public int LeftBorder = 0;
+
+    /// <summary>
+    /// 训练数据
+    /// </summary>
+    public Texture2D SimpleData;
 
     /// <summary>
     /// level1层元素
@@ -112,16 +147,6 @@ public class MapEditor : MonoBehaviour
     /// </summary>
     public const int SetYet = 1;
 
-    /// <summary>
-    /// 单个例子宽度
-    /// </summary>
-    public int SimpleWidth = 19;
-
-    /// <summary>
-    /// 例子高度
-    /// </summary>
-    public int SimpleHeight = 23;
-
 
     //--------------------私有属性-----------------------
 
@@ -133,7 +158,8 @@ public class MapEditor : MonoBehaviour
     /// <summary>
     /// 训练数据
     /// </summary>
-    private Dictionary<int, int[]> trailData = new Dictionary<int, int[]>();
+    private Dictionary<int, List<int[]>> trailDataDic = new Dictionary<int, List<int[]>>();
+    
     /// <summary>
     /// 鼠标点击状态
     /// 0: 当前位置无障碍
@@ -279,7 +305,50 @@ public class MapEditor : MonoBehaviour
             rightdown = new Vector3(halfMapWidth + startPosition.x, (Plane.size.y * Plane.transform.localScale.y) / 2 + startPosition.y, -halfMapHight + startPosition.z);
 
             // 读取训练数据
-
+            if (SimpleData != null)
+            {
+                // 获取图片大小
+                // 计算横向训练数据数量
+                // 纵向只用数字数据
+                var dataPixelWidth = SimpleData.width;
+                var dataPixelHeight = SimpleData.height;
+                var dataWidth = dataPixelWidth/SimpleWidth;
+                var realSimpleWidth = SimpleWidth - RightBorder - LeftBorder;
+                var realSimpleHeight = SimpleHeight - UpBorder - DownBorder;
+                // 十个数字
+                var dataHeight = 10;
+                for (var i = 0; i < dataHeight; i++)
+                {
+                    List<int[]> oneDataArray = null;
+                    if (trailDataDic.ContainsKey(i))
+                    {
+                        oneDataArray = trailDataDic[i];
+                    }
+                    else
+                    {
+                        trailDataDic.Add(i, new List<int[]>());
+                        oneDataArray = trailDataDic[i];
+                    }
+                    // 读取图片中第i行的数据
+                    for (var j = 0; j < dataWidth; j++)
+                    {
+                        var dataArray = new int[(realSimpleHeight) * (realSimpleWidth)];
+                        var row = 0;
+                        // 循环需要读取的行列
+                        for (var z = i*SimpleHeight + UpBorder; z < (i + 1)*SimpleHeight - DownBorder; z++)
+                        {
+                            var col = 0;
+                            for (var x = j*SimpleWidth + LeftBorder; x < (j + 1)*SimpleWidth - RightBorder; x++)
+                            {
+                                dataArray[row * realSimpleWidth + col] = Utils.GetColorNum(SimpleData.GetPixel(x, z));
+                                col++;
+                            }
+                            row ++;
+                        }
+                        oneDataArray.Add(dataArray);
+                    }
+                }
+            }
         }
     }
 
@@ -295,6 +364,18 @@ public class MapEditor : MonoBehaviour
         {
             array = StringMapData2IntArray(mapDataArray[0]);
         };
+    }
+
+
+    public void InitArray()
+    {
+        for (var i = 0; i < array.Length; i++)
+        {
+            for (var j = 0; j < array[i].Length; j++)
+            {
+                array[i][j] = 1;
+            }
+        }
     }
 
 
@@ -587,14 +668,7 @@ public class MapEditor : MonoBehaviour
                 for (var j = 0; j < cells.Length; j++)
                 {
                     var cell = cells[j];
-                    try
-                    {
                         mapData[i][j] = Convert.ToInt32(cell);
-                    }
-                    catch
-                    {
-                        int s = 1;
-                    }
                 }
             }
         }
@@ -707,17 +781,23 @@ public class MapEditor : MonoBehaviour
     /// <summary>
     /// 训练神经网络
     /// </summary>
-    public void Train()
+    public void Trail()
     {
         // 读取数据. 进行识别, 如果识别错误, 进行训练
-        foreach (var kv in trailData)
+        //foreach (var kv in trailDataDic)
+        for (var count = 0; count < 30; count++)
         {
-            for(var i = 0; i < SingleTrailCount; i++)
+            for (var i = 0; i < SingleTrailCount; i++)
             {
-                NeuralMono.Train(GetFloats(kv.Value), GetOutputData(kv.Key));
+                for (var index = 9; index > 0; index--)
+                {
+                    foreach (var dataArray in trailDataDic[index])
+                    {
+                        NeuralMono.Train(GetFloats(dataArray), GetOutputData(index));
+                    }
+                }
             }
         }
-
         // 获取数据集
 
         // 遍历数据集进行识别训练

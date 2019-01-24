@@ -652,6 +652,16 @@ public class Utils
         return (float)Math.Sqrt(xOffset * xOffset + yOffset * yOffset);
     }
 
+    /// <summary>
+    /// 获取颜色单向值
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
+    public static int GetColorNum(Color color)
+    {
+        return ((color.r + color.g+ color.b) * color.a) > ApproachZero ? 1 : 0;
+    }
+
     ///// <summary>
     ///// 排除Y轴
     ///// </summary>
@@ -851,4 +861,5 @@ public class Utils
 
         //Debug.DrawLine(firstPoint, firstPoint + new Vector3(radius, 0, 0), color);
     }
+
 }
