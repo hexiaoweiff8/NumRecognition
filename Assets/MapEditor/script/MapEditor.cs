@@ -784,8 +784,8 @@ public class MapEditor : MonoBehaviour
     public void Trail()
     {
         // 读取数据. 进行识别, 如果识别错误, 进行训练
-        //foreach (var kv in trailDataDic)
-        for (var count = 0; count < 30; count++)
+        foreach (var kv in trailDataDic)
+        //for (var count = 0; count < 30; count++)
         {
             for (var i = 0; i < SingleTrailCount; i++)
             {
