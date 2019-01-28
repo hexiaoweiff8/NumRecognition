@@ -14,7 +14,7 @@ namespace Assets.Script.AI.Neural
         /// <summary>
         /// 学习率
         /// </summary>
-        public static float StudyRate = 0.5f;
+        public static float StudyRate = 0.2f;
 
         /// <summary>
         /// 目标神经连接列表
@@ -47,6 +47,10 @@ namespace Assets.Script.AI.Neural
         /// </summary>
         public float Value;
 
+        /// <summary>
+        /// 激活函数类型
+        /// </summary>
+        public NeuronType ActiveType = NeuronType.Sigmoid;
 
 
         /// <summary>
@@ -54,6 +58,15 @@ namespace Assets.Script.AI.Neural
         /// </summary>
         private static Random random = new Random();
 
+
+        /// <summary>
+        /// 实例化
+        /// </summary>
+        /// <param name="activeType"></param>
+        public NeuronNode(NeuronType activeType)
+        {
+            this.ActiveType = activeType;
+        }
 
         /// <summary>
         /// 连接神经元
@@ -91,10 +104,6 @@ namespace Assets.Script.AI.Neural
             for (var i = 0; i < FromList.Count; i++)
             {
                 FromList[i].weight += FromList[i].NeuronNode.Value * Error * StudyRate;
-                //if (float.IsNaN(FromList[i].weight) || float.IsPositiveInfinity(FromList[i].weight))
-                //{
-                //    int j = 0;
-                //}
             }
         }
 
@@ -121,15 +130,17 @@ namespace Assets.Script.AI.Neural
             {
                 result += FromList[i].weight * FromList[i].NeuronNode.Value;
             }
-            // TODO 多激活函数 RELU
-            // signod
-            var val = (float) (1f/(1f + Math.Pow(Math.E, -result)));
 
-            //if (float.IsNaN(val) || float.IsPositiveInfinity(val))
-            //{
-            //    int i = 0;
-            //}
-
+            var val = 0f;
+            switch (ActiveType)
+            {
+                case NeuronType.Sigmoid:
+                    val = (float)(1f / (1f + Math.Pow(Math.E, -result)));
+                    break;
+                case NeuronType.ReLu:
+                    val = Math.Max(0, result);
+                    break;
+            }
             return val;
         }
 
@@ -160,11 +171,7 @@ namespace Assets.Script.AI.Neural
             }
 
             var val = result * (Value / (1.01f - Value));
-
-            //if (float.IsNaN(val) || float.IsPositiveInfinity(val))
-            //{
-            //    int i = 0;
-            //}
+            
             return val;
         }
 
@@ -185,5 +192,12 @@ namespace Assets.Script.AI.Neural
         /// 连接权重
         /// </summary>
         public float weight;
+    }
+
+
+    public enum NeuronType
+    {
+        Sigmoid,
+        ReLu
     }
 }

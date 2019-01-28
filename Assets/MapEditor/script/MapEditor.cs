@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
@@ -37,6 +38,11 @@ public class MapEditor : MonoBehaviour
     /// 列表按钮
     /// </summary>
     public Button MenuButton;
+
+    /// <summary>
+    /// 精度
+    /// </summary>
+    public InputField AccuracyInput;
 
     /// <summary>
     /// 主相机
@@ -196,7 +202,12 @@ public class MapEditor : MonoBehaviour
     /// 无障碍物
     /// </summary>
     private const int AccessibilityId = 0;
-    
+
+    /// <summary>
+    /// 训练协程
+    /// </summary>
+    private Coroutine trailCo = null;
+
     /// <summary>
     /// 障碍物颜色
     /// </summary>
@@ -205,6 +216,16 @@ public class MapEditor : MonoBehaviour
         {0, Color.white},
         {1, Color.black},
     };
+
+    /// <summary>
+    /// 错误的数字
+    /// </summary>
+    private List<int> errorNum = new List<int>();
+
+    /// <summary>
+    /// 错误的位置
+    /// </summary>
+    private List<int> errorCount = new List<int>();
 
 
     /// <summary>
@@ -378,6 +399,20 @@ public class MapEditor : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 速度切换
+    /// </summary>
+    public void ChangeSpeed()
+    {
+        if (Time.timeScale > 2)
+        {
+            Time.timeScale = 1;
+        }
+        else
+        {
+            Time.timeScale = 30;
+        }
+    }
 
     /// <summary>
     /// 控制
@@ -760,54 +795,131 @@ public class MapEditor : MonoBehaviour
         }
         var outDatas = NeuralMono.Calculate(inDatas);
 
-        var maxIndex = 0;
-        var maxVal = float.MinValue;
-        for (var i = 0; i < outDatas.Length; i++)
-        {
-            if (outDatas[i] > maxVal)
-            {
-                maxVal = outDatas[i];
-                maxIndex = i;
-            }
-        }
 
-        Debug.Log("识别结果:" + maxIndex);
+        Debug.Log("识别结果:" + GetVal(outDatas));
 
         // 神经网络输入数组内容
         // 神经网络输出结果
         // 刷新神经网络实体显示效果
     }
-
     /// <summary>
-    /// 训练神经网络
+    /// 获取准确率
+    /// 循环所有训练数字, 进行识别, 计算准确率
     /// </summary>
-    public void Trail()
+    public float GetAccuracy()
     {
-        // 读取数据. 进行识别, 如果识别错误, 进行训练
-        foreach (var kv in trailDataDic)
-        //for (var count = 0; count < 30; count++)
+        var maxCount = 0;
+        var rightCount = 0;
+        for (var count = 0; count < trailDataDic[0].Count; count++)
         {
-            for (var i = 0; i < SingleTrailCount; i++)
+            for (var num = 9; num > 0; num--)
             {
-                for (var index = 9; index > 0; index--)
+                var val = GetVal(NeuralMono.Calculate(GetFloats(trailDataDic[num][count])));
+                if (val == num)
                 {
-                    foreach (var dataArray in trailDataDic[index])
-                    {
-                        NeuralMono.Train(GetFloats(dataArray), GetOutputData(index));
-                    }
+                    rightCount++;
                 }
+                else
+                {
+                    // 记录错误结果
+                    errorNum.Add(num);
+                    errorCount.Add(count);
+                }
+                maxCount++;
             }
         }
-        // 获取数据集
 
-        // 遍历数据集进行识别训练
+        return (float)rightCount / maxCount;
+    }
 
-        // 如果识别率低于设置值则继续训练
-
+    /// <summary>
+    /// 开始训练
+    /// </summary>
+    public void StartTrail()
+    {
+        if (trailCo != null)
+        {
+            StopCoroutine(trailCo);
+        }
+        trailCo = StartCoroutine(Trail());
 
     }
 
+    /// <summary>
+    /// 开始训练
+    /// </summary>
+    public void StartTrailWithAccuracy()
+    {
+        if (trailCo != null)
+        {
+            StopCoroutine(trailCo);
+        }
+        trailCo = StartCoroutine(TrailWithAccuracy(float.Parse(AccuracyInput.text)));
+    }
 
+    /// <summary>
+    /// 次数训练
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator Trail()
+    {
+        // 读取数据. 进行识别, 如果识别错误, 进行训练
+        //foreach (var kv in trailDataDic)
+        for (var i = 0; i < SingleTrailCount; i++)
+        {
+            Debug.Log("循环次数:" + (i + 1) + "/" + SingleTrailCount);
+            for (var count = 0; count < trailDataDic[0].Count; count++)
+            {
+                for (var index = 9; index > 0; index--)
+                {
+                    //Debug.Log(index + "/" + count);
+                    NeuralMono.Train(GetFloats(trailDataDic[index][count]), GetOutputData(index));
+                }
+            }
+            yield return null;
+        }
+        yield return null;
+    }
+
+
+    /// <summary>
+    /// 训练神经网络按照目标准确率
+    /// </summary>
+    public IEnumerator TrailWithAccuracy(float accuracy)
+    {
+        if (accuracy > 1 || accuracy < 0)
+        {
+            Debug.Log("Error Accuracy:" + accuracy);
+            yield break;
+        }
+
+        var trailCount = 0;
+        var nowAccuracy = 0f;
+        while (nowAccuracy < accuracy)
+        {
+            Debug.Log("循环次数:" + (trailCount + 1) + " 识别率:" + nowAccuracy + "/" + accuracy);
+            for (var count = 0; count < trailDataDic[0].Count; count++)
+            {
+                for (var num = 9; num > 0; num--)
+                {
+                    NeuralMono.Train(GetFloats(trailDataDic[num][count]), GetOutputData(num));
+                }
+            }
+            nowAccuracy = GetAccuracy();
+            // 专门训练错误列表
+
+            trailCount++;
+            yield return null;
+        }
+        yield return null;
+    }
+
+
+    /// <summary>
+    /// 整形数组转浮点数组
+    /// </summary>
+    /// <param name="from"></param>
+    /// <returns></returns>
     private float[] GetFloats(int[] from)
     {
         var result = new float[from.Length];
@@ -819,7 +931,11 @@ public class MapEditor : MonoBehaviour
         return result;
     }
 
-
+    /// <summary>
+    /// 值转数组
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
     private float[] GetOutputData(int pos)
     {
         var result = new float[10];
@@ -835,6 +951,26 @@ public class MapEditor : MonoBehaviour
             }
         }
         return result;
+    }
+
+    /// <summary>
+    /// 数组转值
+    /// </summary>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    private int GetVal(float[] array)
+    {
+        var maxIndex = 0;
+        var maxVal = float.MinValue;
+        for (var i = 0; i < array.Length; i++)
+        {
+            if (array[i] > maxVal)
+            {
+                maxVal = array[i];
+                maxIndex = i;
+            }
+        }
+        return maxIndex;
     }
 }
 

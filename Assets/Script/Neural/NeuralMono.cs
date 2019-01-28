@@ -21,14 +21,30 @@ public class NeuralMono : MonoBehaviour
     public int InNeuralCount;
 
     /// <summary>
+    /// 输入层激活函数
+    /// </summary>
+    public NeuronType InNeuralType = NeuronType.Sigmoid;
+
+    /// <summary>
     /// 隐层数量
     /// </summary>
     public int[] HiddenNeuralCount;
 
     /// <summary>
+    /// 输入层激活函数
+    /// </summary>
+    public NeuronType[] HiddenNeuralType = new []{NeuronType.Sigmoid};
+
+    /// <summary>
     /// 输出层数量
     /// </summary>
     public int OutNeuralCount;
+
+    /// <summary>
+    /// 输入层激活函数
+    /// </summary>
+    public NeuronType OutNeuralType = NeuronType.Sigmoid;
+
 
 
     /// <summary>
@@ -36,8 +52,17 @@ public class NeuralMono : MonoBehaviour
     /// </summary>
     protected virtual void Awake()
     {
+        var hiddenLayerData = new LayerData[HiddenNeuralCount.Length];
+
+        for (var i = 0; i < HiddenNeuralCount.Length; i++)
+        {
+            hiddenLayerData[i] = new LayerData(HiddenNeuralCount[i], HiddenNeuralType[i]);
+        }
+        
         // 实例化神经网络
-        NeuralNet = new NeuralNet(InNeuralCount, HiddenNeuralCount, OutNeuralCount);
+        NeuralNet = new NeuralNet(new LayerData(InNeuralCount, NeuronType.Sigmoid),
+            hiddenLayerData,
+            new LayerData(OutNeuralCount, NeuronType.Sigmoid));
     }
 
 

@@ -27,16 +27,22 @@ namespace Assets.Script.AI.Neural
         /// </summary>
         public List<NeuronNode> NodeList = new List<NeuronNode>();
 
+        /// <summary>
+        /// 层类型
+        /// </summary>
+        public NeuronType LayerType = NeuronType.Sigmoid;
+
 
         /// <summary>
         /// 实例化
         /// </summary>
         /// <param name="nodeCount">当前层节点数量</param>
-        public NeuronLayer(int nodeCount)
+        public NeuronLayer(int nodeCount, NeuronType layerType = NeuronType.Sigmoid)
         {
+            this.LayerType = layerType;
             for (var i = 0; i < nodeCount; i++)
             {
-                NodeList.Add(new NeuronNode());
+                NodeList.Add(new NeuronNode(layerType));
             }
         }
 

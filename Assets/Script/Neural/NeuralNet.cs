@@ -33,25 +33,25 @@ namespace Assets.Script.AI.Neural
         /// <param name="inLayerNodeCount">输入层节点数</param>
         /// <param name="hiddenLayerNodeCount">输出层节点数</param>
         /// <param name="outLayerNodeCount">输出层节点数</param>
-        public NeuralNet(int inLayerNodeCount, [NotNull]int[] hiddenLayerNodeCount, int outLayerNodeCount)
+        public NeuralNet(LayerData inLayerNode, [NotNull]LayerData[] hiddenLayerNode, LayerData outLayerNode)
         {
             // 输入层
-            InLayer = new NeuronLayer(inLayerNodeCount);
+            InLayer = new NeuronLayer(inLayerNode.NodeCount, inLayerNode.ActiveType);
 
             // 隐层
-            HideLayer = new NeuronLayer[hiddenLayerNodeCount.Length];
+            HideLayer = new NeuronLayer[hiddenLayerNode.Length];
 
-            for (var i = 0; i < hiddenLayerNodeCount.Length; i++)
+            for (var i = 0; i < hiddenLayerNode.Length; i++)
             {
-                HideLayer[i] = new NeuronLayer(hiddenLayerNodeCount[i]);
+                HideLayer[i] = new NeuronLayer(hiddenLayerNode[i].NodeCount, hiddenLayerNode[i].ActiveType);
             }
 
             // 输出层
-            OutLayer = new NeuronLayer(outLayerNodeCount);
+            OutLayer = new NeuronLayer(outLayerNode.NodeCount, outLayerNode.ActiveType);
 
             InLayer.ConnectLayer(HideLayer[0]);
 
-            for (var i = 0; i < hiddenLayerNodeCount.Length - 1; i++)
+            for (var i = 0; i < hiddenLayerNode.Length - 1; i++)
             {
                 HideLayer[i].ConnectLayer(HideLayer[i + 1]);
             }
@@ -141,6 +141,32 @@ namespace Assets.Script.AI.Neural
             }
 
             return result;
+        }
+    }
+
+
+    public class LayerData
+    {
+        /// <summary>
+        /// 层节点数量
+        /// </summary>
+        public int NodeCount = 0;
+
+        /// <summary>
+        /// 层类型
+        /// </summary>
+        public NeuronType ActiveType = NeuronType.Sigmoid;
+
+
+        /// <summary>
+        /// 实例化
+        /// </summary>
+        /// <param name="nodeCount"></param>
+        /// <param name="activeType"></param>
+        public LayerData(int nodeCount, NeuronType activeType)
+        {
+            NodeCount = nodeCount;
+            ActiveType = activeType;
         }
     }
 }
