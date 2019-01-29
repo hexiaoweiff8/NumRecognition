@@ -369,10 +369,10 @@ public class MapEditor : MonoBehaviour
                         var dataArray = new int[(realSimpleHeight) * (realSimpleWidth)];
                         var row = 0;
                         // 循环需要读取的行列
-                        for (var z = i*SimpleHeight + UpBorder; z < (i + 1)*SimpleHeight - DownBorder; z++)
+                        for (var z = (i + 1) * SimpleHeight - DownBorder; z > i * SimpleHeight + UpBorder; z--)
                         {
                             var col = 0;
-                            for (var x = (j + 1) * SimpleWidth - RightBorder; x > j * SimpleWidth + LeftBorder; x--)
+                            for (var x = j * SimpleWidth + LeftBorder; x < (j + 1) * SimpleWidth - RightBorder; x++)
                             {
                                 dataArray[row * realSimpleWidth + col] = Utils.GetColorNum(SimpleData.GetPixel(x, dataPixelHeight - z));
                                 col++;
@@ -857,7 +857,7 @@ public class MapEditor : MonoBehaviour
         var rightCount = 0;
         for (var count = 0; count < trailDataDic[0].Count; count++)
         {
-            for (var num = 9; num > 0; num--)
+            for (var num = 9; num >= 0; num--)
             {
                 var val = GetVal(NeuralMono.Calculate(GetFloats(trailDataDic[num][count])));
                 if (val == num)
@@ -915,7 +915,7 @@ public class MapEditor : MonoBehaviour
             Debug.Log("循环次数:" + (i + 1) + "/" + SingleTrailCount);
             for (var count = 0; count < trailDataDic[0].Count; count++)
             {
-                for (var num = 9; num > 0; num--)
+                for (var num = 9; num >= 0; num--)
                 {
                     NeuralMono.Train(GetFloats(trailDataDic[num][count]), GetOutputData(num));
                 }
@@ -944,7 +944,7 @@ public class MapEditor : MonoBehaviour
             Debug.Log("循环次数:" + (trailCount + 1) + " 识别率:" + nowAccuracy + "/" + accuracy);
             for (var count = 0; count < trailDataDic[0].Count; count++)
             {
-                for (var num = 9; num > 0; num--)
+                for (var num = 9; num >= 0; num--)
                 {
                     NeuralMono.Train(GetFloats(trailDataDic[num][count]), GetOutputData(num));
                 }
