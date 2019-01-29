@@ -43,6 +43,16 @@ public class MapEditor : MonoBehaviour
     /// 精度
     /// </summary>
     public InputField AccuracyInput;
+    
+    /// <summary>
+    /// 加载数字
+    /// </summary>
+    public InputField LoadDataNumInput;
+    
+    /// <summary>
+    /// 加载数字index
+    /// </summary>
+    public InputField LoadDataIndexInput;
 
     /// <summary>
     /// 主相机
@@ -303,14 +313,17 @@ public class MapEditor : MonoBehaviour
 
             // 创建对应大小的map数据
             array = new int[MapHeight][];
+            historyMap = new int[MapHeight][];
 
 
             for (var row = 0; row < MapHeight; row++)
             {
                 array[row] = new int[MapWidth];
+                historyMap[row] = new int[MapWidth];
                 for (var col = 0; col < MapWidth; col++)
                 {
                     array[row][col] = 1;
+                    historyMap[row][col] = -1;
                 }
             }
             // 初始化优化数据
@@ -359,9 +372,9 @@ public class MapEditor : MonoBehaviour
                         for (var z = i*SimpleHeight + UpBorder; z < (i + 1)*SimpleHeight - DownBorder; z++)
                         {
                             var col = 0;
-                            for (var x = j*SimpleWidth + LeftBorder; x < (j + 1)*SimpleWidth - RightBorder; x++)
+                            for (var x = (j + 1) * SimpleWidth - RightBorder; x > j * SimpleWidth + LeftBorder; x--)
                             {
-                                dataArray[row * realSimpleWidth + col] = Utils.GetColorNum(SimpleData.GetPixel(x, z));
+                                dataArray[row * realSimpleWidth + col] = Utils.GetColorNum(SimpleData.GetPixel(x, dataPixelHeight - z));
                                 col++;
                             }
                             row ++;
@@ -387,7 +400,9 @@ public class MapEditor : MonoBehaviour
         };
     }
 
-
+    /// <summary>
+    /// 初始化手写板
+    /// </summary>
     public void InitArray()
     {
         for (var i = 0; i < array.Length; i++)
@@ -395,6 +410,7 @@ public class MapEditor : MonoBehaviour
             for (var j = 0; j < array[i].Length; j++)
             {
                 array[i][j] = 1;
+                historyMap[i][j] = -1;
             }
         }
     }
@@ -576,17 +592,22 @@ public class MapEditor : MonoBehaviour
         RefreshMap(array, 1);
     }
 
+
+    private int[][] historyMap;
     private void RefreshMap(int[][] map, int layer)
     {
         var mapState = mapStateDic[layer];
         for (long row = 0; row < map.Length; row++)
         {
             var oneRow = map[row];
+            var hisRow = historyMap[row];
             for (long col = 0; col < oneRow.Length; col++)
             {
                 var val = oneRow[col];
-                if (AccessibilityId != val)
+                var hisVal = hisRow[col];
+                if (hisVal != val)
                 {
+                    hisRow[col] = val;
                     var newObstacler = mapState[row, col];
                     if (newObstacler == null)
                     {
@@ -777,6 +798,28 @@ public class MapEditor : MonoBehaviour
     }
 
     /// <summary>
+    /// 加载数据
+    /// </summary>
+    public void LoadNumData()
+    {
+        var num = int.Parse(LoadDataNumInput.text.Trim());
+        var index = int.Parse(LoadDataIndexInput.text.Trim());
+        var data = trailDataDic[num][index];
+
+
+        var height = array.Length;
+        var width = array[0].Length;
+        for (var i = 0; i < height; i++)
+        {
+            for (var j = 0; j < width; j++)
+            {
+                array[i][j] = data[i * width + j];
+            }
+        }
+
+    }
+
+    /// <summary>
     /// 识别
     /// </summary>
     public void Recognition()
@@ -808,6 +851,8 @@ public class MapEditor : MonoBehaviour
     /// </summary>
     public float GetAccuracy()
     {
+        errorNum.Clear();
+        errorCount.Clear();
         var maxCount = 0;
         var rightCount = 0;
         for (var count = 0; count < trailDataDic[0].Count; count++)
@@ -870,10 +915,9 @@ public class MapEditor : MonoBehaviour
             Debug.Log("循环次数:" + (i + 1) + "/" + SingleTrailCount);
             for (var count = 0; count < trailDataDic[0].Count; count++)
             {
-                for (var index = 9; index > 0; index--)
+                for (var num = 9; num > 0; num--)
                 {
-                    //Debug.Log(index + "/" + count);
-                    NeuralMono.Train(GetFloats(trailDataDic[index][count]), GetOutputData(index));
+                    NeuralMono.Train(GetFloats(trailDataDic[num][count]), GetOutputData(num));
                 }
             }
             yield return null;
@@ -906,8 +950,21 @@ public class MapEditor : MonoBehaviour
                 }
             }
             nowAccuracy = GetAccuracy();
-            // 专门训练错误列表
 
+            // 重点训练错误内容
+            Debug.Log("错误集合训练:" + errorNum.Count);
+            for (var i = 0; i < errorNum.Count; i++)
+            {
+                var num = errorNum[i];
+                var count = errorCount[i];
+                var trailData = GetFloats(trailDataDic[num][count]);
+                var targetData = GetOutputData(num);
+                for (var j = 0; j < SingleTrailCount; j++)
+                {
+                    NeuralMono.Train(trailData, targetData);
+                }
+                yield return null;
+            }
             trailCount++;
             yield return null;
         }

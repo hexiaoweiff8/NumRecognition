@@ -659,7 +659,27 @@ public class Utils
     /// <returns></returns>
     public static int GetColorNum(Color color)
     {
-        return ((color.r + color.g+ color.b) * color.a) > ApproachZero ? 1 : 0;
+        return ((color.r + color.g+ color.b)) > 1.5f ? 1 : 0;
+    }
+
+    /// <summary>
+    /// //Sigmoid function
+    /// </summary>
+    /// <param name="x"></param>
+    /// <returns></returns>
+    public static float SIGMOID(float x)
+    {
+        return (1.7159f * (float)System.Math.Tanh(0.66666667 * x));
+
+    }
+    /// <summary>
+    /// // // derivative of the sigmoid as a function of the sigmoid's output
+    /// </summary>
+    /// <param name="S"></param>
+    /// <returns></returns>
+    public static float DSIGMOID(float S)
+    {
+        return (0.66666667f / 1.7159f * (1.7159f + (S)) * (1.7159f - (S)));
     }
 
     ///// <summary>

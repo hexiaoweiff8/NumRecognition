@@ -104,6 +104,10 @@ namespace Assets.Script.AI.Neural
             for (var i = 0; i < FromList.Count; i++)
             {
                 FromList[i].weight += FromList[i].NeuronNode.Value * Error * StudyRate;
+                //if (float.IsNaN(FromList[i].weight) || float.IsPositiveInfinity(FromList[i].weight))
+                //{
+                //    int j = 0;
+                //}
             }
         }
 
@@ -141,6 +145,12 @@ namespace Assets.Script.AI.Neural
                     val = Math.Max(0, result);
                     break;
             }
+
+            //if (float.IsNaN(val) || float.IsPositiveInfinity(val))
+            //{
+            //    int i = 0;
+            //}
+
             return val;
         }
 
